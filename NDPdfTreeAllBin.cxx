@@ -120,7 +120,7 @@ NDPdfTreeAllBin::CreatePdf(Bool_t firstCall) const
 
     CalculateBandWidth();// Calculates average bandwidth in 5 sigma range
     if (fMode==1)  AverageW();//Calculates average point and h in bin
- 
+    if ((fMode==3)||(fOptions.Contains("b"))) AverageW();
 		
     
     
@@ -370,9 +370,10 @@ NDPdfTreeAllBin::AverageW() const
                 if(fOptions.Contains("a"))
                 
                 {
-                    
+                    if (fMode==1)
                     avrW[k]+=fWeights1[Index[j]][k];
                     //cout << "W= " << fWeights1[Index[j]][k]<<endl;
+                    if (fMode==3) avrW[k]+=fWeights0[Index[j]][k];
                 }
                 else {
                     avrW[k]+=fWeights0[Index[j]][k];
@@ -418,7 +419,8 @@ void
 NDPdfTreeAllBin::CalculateBandWidth() const
 {
     TStopwatch w;
-    
+    w.Start();
+    cout<< "Entering Calculate bandwidth" <<endl;
     // non-adaptive bandwidth
     // (default, and needed to calculate adaptive bandwidth)
     
@@ -439,7 +441,10 @@ NDPdfTreeAllBin::CalculateBandWidth() const
         
         double sqrt12=sqrt(12.);
         double sqrtSigmaAvgR=sqrt(fSigmaAvgR);
+        cout<< fMode<< endl;
         
+        if (fMode!=3){
+            
         vector<Double_t> dummy(fNDim,0.);
         fWeights1.resize(fNEvents,dummy);
         
@@ -454,13 +459,37 @@ NDPdfTreeAllBin::CalculateBandWidth() const
                 
                 //cout<<fWeights1[i][j] <<"weight[i][j]"<<endl;
             }
+          
+        }
+             fWeights = &fWeights1;
+        }
+        else {
+            
+            //vector<Double_t> dummy(fNDim,0.);
+           // fWeights1.resize((int)(fTotalNodes-fNNodes),dummy);
+            AverageW();
+           
+           for(Int_t i=0; i<(int)(fTotalNodes-fNNodes); ++i) {
+                vector<Double_t>& x = fAvrPoints[i];
+                Double_t f = TMath::Power( GaussAll(x.data(),fAvrWeights)/fNEventsW , -1./(2.*fD) ) ;
+                for (Int_t j=0; j<fNDim; j++) {
+                    Double_t norm = (fRho[j]*fN*(*fSigmaR)[j]) / sqrtSigmaAvgR ;
+                
+                    fAvrWeights[i][j]=norm * f / sqrt12 ;
+                    
+                    cout<< "h_adaptive["<<i<<"]["<<j<<"]= "<<fAvrWeights[i][j]<<endl;
+                    
+           
             
         }
-        fWeights = &fWeights1;
+	}
+        }
+       
     }
     
     
-    cout<<"Done"<< endl;
+    cout<<" Class Bandwith: Done; Time ="<< endl;
+    w.Print();
 }
 
 
@@ -528,10 +557,11 @@ Double_t
 //_____________________________________________________________________________
 NDPdfTreeAllBin::evaluate(double *x) const
 {
-     Double_t val;
+     Double_t val=0;
     
     if (fMode==1) val = GaussAll(x,*fWeights);
     if (fMode==2) val = Gauss(x,*fWeights);
+    if (fMode==3) val = GaussAll(x,*fWeights);
     //cout<<"returning "<<val<<endl;
     
     if (val>=1E-20)
@@ -709,10 +739,10 @@ NDPdfTreeAllBin::GaussAll(double *x, vector<vector<Double_t> >& weights) const
             Double_t c = 1./(2.*fAvrWeights[i][j]*fAvrWeights[i][j]);
             //cout<< "g=" << g<<endl;
             g *= exp( -c*r*r);
-            
             g *= 1./(fSqrt2pi*fAvrWeights[i][j]);
        
         }
+    
         
         //cout<< "Number of points in the node = " << fTree->GetNPointsNode(i+1+fNNodes)<< endl;
         z += (g*1)*fTree->GetNPointsNode(i+fNNodes);

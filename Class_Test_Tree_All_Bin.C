@@ -50,7 +50,7 @@ int i_x,i_y;
 Double_t eval;
 TStopwatch w;
 w.Start();
-A= new NDPdfTreeAllBin(data,"a",1,3,false,10000,2,weights,1,10,5);
+A= new NDPdfTreeAllBin(data,"a",1,3,false,10000,2,weights,3,10,1);
 std::vector<double> X(2);
 Double_t res=0;
 Double_t res2=0;
