@@ -8,6 +8,7 @@
 #include "TError.h"
 #include "TKDTree.h"
 #include "TStopwatch.h"
+#include "Math/Delaunay2D.h"
 
 using namespace std;
 
@@ -121,9 +122,12 @@ NDPdfTreeAllBin::CreatePdf(Bool_t firstCall) const
     CalculateBandWidth();// Calculates average bandwidth in 5 sigma range
     if (fMode==1)  AverageW();//Calculates average point and h in bin
     if ((fMode==3)||(fOptions.Contains("b"))) AverageW();
-		
-    
-    
+    TStopwatch a;
+    a.Start();
+    ComputePDF();  
+    cout<<"Precomputed PDF in:"<<endl;
+    a.Print();
+    cout<<"DONE :)"<< endl;
 }
 
 void
@@ -173,8 +177,6 @@ NDPdfTreeAllBin::Initialize() const
     fSigmaR = 0;
     fDx = new TVectorD(fNDim); fDx->Zero();
     fDataPtsR.resize(fNEvents,*fDx);
-    
-    
 }
 
 void
@@ -335,7 +337,7 @@ NDPdfTreeAllBin::AverageW() const
     vector<Double_t> dummy(fNDim,0.);
     fAvrPoints.resize(fTotalNodes-fNNodes,dummy);
     fAvrWeights.resize(fTotalNodes-fNNodes,dummy);
-    
+    //fPDF.resize(fTotalNodes-fNNodes,0.);
     
     std::vector<Double_t> avr(fNDim);
     std::vector<Double_t> avrW(fNDim);
@@ -544,7 +546,7 @@ NDPdfTreeAllBin::Gauss(double *x, vector<vector<Double_t> >& weights) const
             //cout << "c= "<<c<< " weight[j] " <<weight[j]<<" r "<< r<< " g= " <<g <<endl;
             
         }
-        z += (g*1);
+        z += (g*fWgt[i]);
     }
     //cout << "z= " << z<< endl;
     return z;
@@ -568,6 +570,18 @@ NDPdfTreeAllBin::evaluate(double *x) const
     return val ;
     else
     return (1E-20) ;
+}
+Double_t
+//_____________________________________________________________________________
+NDPdfTreeAllBin::Interpol(double *x) const
+{
+    Double_t val=0;
+    val=fInterpolate->Interpolate(x[0],x[1]);
+    
+    if (val>=1E-20)
+        return val ;
+    else
+        return (1E-20) ;
 }
 
 std::vector<Double_t>
@@ -754,4 +768,60 @@ NDPdfTreeAllBin::GaussAll(double *x, vector<vector<Double_t> >& weights) const
     
     
     
+}
+
+void NDPdfTreeAllBin::ComputePDF() const
+
+{
+    double *x,*y;
+    Int_t n=0;
+if ((fMode==1)||(fMode==3)) 
+
+	{
+        n=fTotalNodes-fNNodes;
+        
+        
+        fPDF= new Double_t [n];
+        x= new Double_t [n];
+        y= new Double_t [n];
+        
+	for(int i=0;i<fTotalNodes-fNNodes;i++)
+		{
+            
+            x[i]=fAvrPoints[i][0];
+            y[i]=fAvrPoints[i][1];
+		fPDF[i]=evaluate(fAvrPoints[i].data());
+		cout<< "X= "<<fAvrPoints[i][0]<< "; Y= "<<fAvrPoints[i][1] <<"; Eval= "  <<fPDF[i]<<endl;
+		cout<<"--------------------------------"<<endl; 
+		}
+        
+        
+        if (fNDim==2)
+           fInterpolate=new ROOT::Math::Delaunay2D(n,x,y,fPDF);
+
+}
+
+	else
+    {   n=fNEvents;
+        
+        fPDF= new Double_t [n];
+        x= new Double_t [n];
+        y= new Double_t [n];
+        
+       
+        for(int i=0;i<fNEvents;i++)
+        {
+            
+            x[i]=fDataPts[i][0];
+            y[i]=fDataPts[i][1];
+            fPDF[i]=evaluate(fDataPts[i].data());
+            cout<< "X= "<<fDataPts[i][0]<< "; Y= "<<fDataPts[i][1] <<"; Eval= "  <<fPDF[i]<<endl;
+            cout<<"--------------------------------"<<endl;
+            ;if (fNDim==2)
+               fInterpolate=new ROOT::Math::Delaunay2D(n,x,y,fPDF);
+        }
+        
+        
+    }
+
 }

@@ -8,6 +8,7 @@
 #include <string>
 #include "TKDTree.h"
 #include "TStopwatch.h" 
+#include "Math/Delaunay2D.h"
 
 class NDPdfTreeAllBin
 {
@@ -54,8 +55,8 @@ class NDPdfTreeAllBin
 	mutable int fTotalNodes;
 	mutable int fNNodes;
 	mutable int fSigmaRange;
-
-	
+	mutable	double *fPDF;
+    mutable ROOT::Math::Delaunay2D *fInterpolate;
 	
  	
 public:
@@ -64,6 +65,7 @@ public:
   	NDPdfTreeAllBin(std::vector<Double_t>& data, TString options, Double_t rho, Double_t nSigma, Bool_t rotate,Int_t nEvents, Int_t nDim, Int_t mode, Int_t nbins, int sigmarange);
 	NDPdfTreeAllBin(std::vector<Double_t>& data, TString options, Double_t rho, Double_t nSigma, Bool_t rotate,Int_t nEvents, Int_t nDim, std::vector<Double_t>& wgt, Int_t mode, Int_t nbins, int sigmarange );
 	Double_t evaluate(double *x) const;
+    Double_t Interpol(double *x) const;
 protected:
 
 	void     CreatePdf(Bool_t firstCall=kTRUE) const;
@@ -77,6 +79,7 @@ protected:
 	Double_t GaussAll(double *x, std::vector<std::vector<Double_t> >& weights) const;
 	std::vector<Double_t> FindAveragePoint(double *x) const;
 	std::vector<Double_t> FindAverageWeight(double *x) const;
+       	void ComputePDF() const;
 
 };
 
