@@ -58,11 +58,12 @@ int i_x,i_y;
     Double_t eval,interpol;
 TStopwatch w;
     w.Start();
-A= new NDPdfTreeAllBin(data,"a",1,3,true,10000,2,weights,1,10,5);
+A= new NDPdfTreeAllBin(data,"a",1,3,true,10000,2,weights,3,10,1);
 std::vector<double> X(2);
 Double_t res=0;
 Double_t res2=0;
 w.Print();
+    cout<<"Evauation&Interpolation time: "<<endl;
 w.Start();
 for (int i=1; i<=100; i++)
 {
@@ -83,7 +84,7 @@ res+=eval-g;
 
 if (g>0)
 res2+=(eval-g)*(eval-g)/g;
-    cout<<"TEST"<<res2<<endl;
+  //  cout<<"TEST"<<res2<<endl;
 }
 
 }
@@ -95,7 +96,7 @@ w.Print();
     Hist->SetLineColor(kRed);
     Hist_PDF->SetLineColor(kBlue);
     Hist_Interpol->SetLineColor(kMagenta);
-cout <<"res=" << res << " res2= " <<res2<< "  " <<res2/2500 <<endl;
+//cout <<"res=" << res << " res2= " <<res2<< "  " <<res2/2500 <<endl;
 Hist->Draw("LEGO");
 new TCanvas();
 Hist_PDF->Draw("LEGO");

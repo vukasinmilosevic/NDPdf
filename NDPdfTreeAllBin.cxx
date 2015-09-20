@@ -116,13 +116,15 @@ NDPdfTreeAllBin::CreatePdf(Bool_t firstCall) const
     LoadDataSet(firstCall);
     
     // determine static and/or adaptive bandwidth
-    
+     TStopwatch a;
     cout << "Calculate Bandwidth"<<endl;
-
-    CalculateBandWidth();// Calculates average bandwidth in 5 sigma range
+    a.Start();
+    CalculateBandWidth();
+     a.Print();
+    // Calculates average bandwidth in 5 sigma range
     if (fMode==1)  AverageW();//Calculates average point and h in bin
-    if ((fMode==3)||(fOptions.Contains("b"))) AverageW();
-    TStopwatch a;
+    if ((fMode==3)&&(fOptions.Contains("b"))) AverageW();
+   
     a.Start();
     ComputePDF();  
     cout<<"Precomputed PDF in:"<<endl;
@@ -360,7 +362,7 @@ NDPdfTreeAllBin::AverageW() const
             avrW[k]=0;
             
         }
-        
+       // cout<<"Broj tacaka="<< fTree->GetNPointsNode(i)<<endl;
         for (int j=0; j <fTree->GetNPointsNode(i) ;j++)
         
         { w+=fWgt[Index[j]];
@@ -470,7 +472,7 @@ NDPdfTreeAllBin::CalculateBandWidth() const
             //vector<Double_t> dummy(fNDim,0.);
            // fWeights1.resize((int)(fTotalNodes-fNNodes),dummy);
             AverageW();
-           
+            cout<<"ULAZ"<<endl;
            for(Int_t i=0; i<(int)(fTotalNodes-fNNodes); ++i) {
                 vector<Double_t>& x = fAvrPoints[i];
                 Double_t f = TMath::Power( GaussAll(x.data(),fAvrWeights)/fNEventsW , -1./(2.*fD) ) ;
@@ -485,6 +487,7 @@ NDPdfTreeAllBin::CalculateBandWidth() const
             
         }
 	}
+           
         }
        
     }
@@ -519,7 +522,7 @@ NDPdfTreeAllBin::Gauss(double *x, vector<vector<Double_t> >& weights) const
     
     
     
-    //cout<<"Sigma= "<<Sigma<<" res.size= " <<res.size()<<endl;
+    //cout<<" res.size= " <<res.size()<<endl;
     
     for (UInt_t i=0; i<res.size(); i++) {
         
@@ -754,7 +757,7 @@ NDPdfTreeAllBin::GaussAll(double *x, vector<vector<Double_t> >& weights) const
             //cout<< "g=" << g<<endl;
             g *= exp( -c*r*r);
             g *= 1./(fSqrt2pi*fAvrWeights[i][j]);
-       
+          //  cout<<"TEZINE  =   "<<fAvrWeights[i][j]<<endl;
         }
     
         
@@ -791,8 +794,8 @@ if ((fMode==1)||(fMode==3))
             x[i]=fAvrPoints[i][0];
             y[i]=fAvrPoints[i][1];
 		fPDF[i]=evaluate(fAvrPoints[i].data());
-		cout<< "X= "<<fAvrPoints[i][0]<< "; Y= "<<fAvrPoints[i][1] <<"; Eval= "  <<fPDF[i]<<endl;
-		cout<<"--------------------------------"<<endl; 
+		//cout<< "X= "<<fAvrPoints[i][0]<< "; Y= "<<fAvrPoints[i][1] <<"; Eval= "  <<fPDF[i]<<endl;
+		//cout<<"--------------------------------"<<endl;
 		}
         
         
@@ -815,9 +818,9 @@ if ((fMode==1)||(fMode==3))
             x[i]=fDataPts[i][0];
             y[i]=fDataPts[i][1];
             fPDF[i]=evaluate(fDataPts[i].data());
-            cout<< "X= "<<fDataPts[i][0]<< "; Y= "<<fDataPts[i][1] <<"; Eval= "  <<fPDF[i]<<endl;
-            cout<<"--------------------------------"<<endl;
-            ;if (fNDim==2)
+            //cout<< "X= "<<fDataPts[i][0]<< "; Y= "<<fDataPts[i][1] <<"; Eval= "  <<fPDF[i]<<endl;
+            //cout<<"--------------------------------"<<endl;
+            if (fNDim==2)
                fInterpolate=new ROOT::Math::Delaunay2D(n,x,y,fPDF);
         }
         
